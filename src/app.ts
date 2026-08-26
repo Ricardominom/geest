@@ -1,11 +1,13 @@
 import express, { Application } from 'express';
 import { AppDataSource } from './db/data-source';
+import { usersRouter } from './routes/users.routes';
+import { errorHandler, notFoundHandler } from './middleware/errorHandler';
 
 export function createApp(): Application {
   const app = express();
 
   app.disable('x-powered-by');
-  app.use(express.json());
+  app.use(express.json({ limit: '256kb' }));
 
   app.get('/', (_req, res) => {
     res.json({ name: 'Reto GEEST API', version: '1.0.0' });
@@ -21,6 +23,10 @@ export function createApp(): Application {
       });
     }
   });
+
+  app.use(usersRouter);
+  app.use(notFoundHandler);
+  app.use(errorHandler);
 
   return app;
 }

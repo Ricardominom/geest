@@ -1,4 +1,4 @@
-import { Column, CreateDateColumn, Entity, Index, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
+import { Column, CreateDateColumn, Entity, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
 import { TaskAssignment } from '../entities/TaskAssignment';
 
 @Entity('users')
@@ -16,7 +16,6 @@ export class User {
    * El correo se guarda normalizado a minusculas, de modo que el indice unico
    * trate "Ana@x.com" y "ana@x.com" como la misma persona.
    */
-  @Index('uq_users_email', { unique: true })
   @Column({ type: 'varchar', length: 254 })
   email!: string;
 
