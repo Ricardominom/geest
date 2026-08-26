@@ -3,7 +3,7 @@ import { z } from 'zod';
 import { asyncHandler } from '../middleware/errorHandler';
 import { parseIdParam, parseQuery, validateBody } from '../middleware/validate';
 import { TASK_STATUSES, TaskStatus } from '../entities/Task';
-import { assignUsers, createTask, getTask, listTasks } from '../services/tasks.service';
+import { assignUsers, completeTaskPart, createTask, getTask, listTasks } from '../services/tasks.service';
 
 const createTaskSchema = z.object({
   title: z
@@ -20,6 +20,13 @@ const assignSchema = z.object({
       error: 'userIds es obligatorio y debe ser un arreglo de enteros.',
     })
     .min(1, 'userIds debe contener al menos un usuario.'),
+});
+
+const completeSchema = z.object({
+  userId: z
+    .number({ error: 'userId es obligatorio y debe ser un entero.' })
+    .int('userId debe ser un entero.')
+    .positive('userId debe ser un entero positivo.'),
 });
 
 const listTasksQuerySchema = z.object({
@@ -42,6 +49,15 @@ tasksRouter.post(
   asyncHandler(async (req, res) => {
     const taskId = parseIdParam(req, 'idTask');
     res.status(200).json(await assignUsers(taskId, req.body.userIds));
+  }),
+);
+
+tasksRouter.post(
+  '/tasks/:idTask/complete',
+  validateBody(completeSchema),
+  asyncHandler(async (req, res) => {
+    const taskId = parseIdParam(req, 'idTask');
+    res.status(200).json(await completeTaskPart(taskId, req.body.userId));
   }),
 );
 

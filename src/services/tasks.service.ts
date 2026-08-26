@@ -32,9 +32,22 @@ export async function assignUsers(taskId: number, userIds: number[]) {
   const uniqueIds = [...new Set(userIds)];
 
   return AppDataSource.transaction(async (manager) => {
-    const task = await manager.findOne(Task, { where: { id: taskId } });
-    if (!task) {
+    const tareas = rows<{ id: number; status: TaskStatus }>(
+      await manager.query(
+        `SELECT "id", "status" FROM "tasks" WHERE "id" = $1 FOR UPDATE`,
+        [taskId],
+      ),
+    );
+
+    if (tareas.length === 0) {
       throw AppError.notFound('TASK_NOT_FOUND', `No existe la tarea con id ${taskId}.`);
+    }
+
+    if (tareas[0].status === 'archived') {
+      throw AppError.conflict(
+        'TASK_ALREADY_ARCHIVED',
+        `La tarea ${taskId} ya esta archivada y no admite nuevas asignaciones.`,
+      );
     }
 
     const existentes = rows<{ id: number }>(
@@ -162,4 +175,85 @@ export async function getTask(taskId: number) {
 
   const [task] = await attachAssignees(encontradas);
   return task;
+}
+
+export interface CompleteResult {
+  message: string;
+  taskId: number;
+  userId: number;
+  taskStatus: TaskStatus;
+  archived: boolean;
+  pendingUsers: number;
+}
+
+export async function completeTaskPart(taskId: number, userId: number): Promise<CompleteResult> {
+  return AppDataSource.transaction(async (manager) => {
+    const tareas = rows<{ id: number; title: string; status: TaskStatus }>(
+      await manager.query(
+        `SELECT "id", "title", "status" FROM "tasks" WHERE "id" = $1 FOR UPDATE`,
+        [taskId],
+      ),
+    );
+
+    if (tareas.length === 0) {
+      throw AppError.notFound('TASK_NOT_FOUND', `No existe la tarea con id ${taskId}.`);
+    }
+    const task = tareas[0];
+
+    const usuarios = rows<{ id: number }>(
+      await manager.query(`SELECT "id" FROM "users" WHERE "id" = $1`, [userId]),
+    );
+    if (usuarios.length === 0) {
+      throw AppError.notFound('USER_NOT_FOUND', `No existe el usuario con id ${userId}.`);
+    }
+
+    const asignacion = rows<{ completed: boolean }>(
+      await manager.query(
+        `SELECT "completed" FROM "task_assignments" WHERE "task_id" = $1 AND "user_id" = $2`,
+        [taskId, userId],
+      ),
+    );
+    if (asignacion.length === 0) {
+      throw AppError.conflict(
+        'USER_NOT_ASSIGNED',
+        `El usuario ${userId} no esta asignado a la tarea ${taskId}.`,
+      );
+    }
+
+    if (!asignacion[0].completed) {
+      await manager.query(
+        `UPDATE "task_assignments" SET "completed" = true, "completed_at" = now()
+         WHERE "task_id" = $1 AND "user_id" = $2`,
+        [taskId, userId],
+      );
+    }
+
+    const pendientes = rows<{ n: number }>(
+      await manager.query(
+        `SELECT count(*)::int AS n FROM "task_assignments"
+         WHERE "task_id" = $1 AND "completed" = false`,
+        [taskId],
+      ),
+    )[0].n;
+
+    let status: TaskStatus = task.status;
+
+    if (pendientes === 0 && task.status === 'open') {
+      await manager.query(
+        `UPDATE "tasks" SET "status" = 'archived', "archived_at" = now(), "updated_at" = now()
+         WHERE "id" = $1`,
+        [taskId],
+      );
+      status = 'archived';
+    }
+
+    return {
+      message: 'Parte de la tarea completada.',
+      taskId,
+      userId,
+      taskStatus: status,
+      archived: status === 'archived',
+      pendingUsers: pendientes,
+    };
+  });
 }
