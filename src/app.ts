@@ -1,4 +1,5 @@
 import express, { Application } from 'express';
+import { AppDataSource } from './db/data-source';
 
 export function createApp(): Application {
   const app = express();
@@ -10,8 +11,15 @@ export function createApp(): Application {
     res.json({ name: 'Reto GEEST API', version: '1.0.0' });
   });
 
-  app.get('/health', (_req, res) => {
-    res.json({ status: 'ok', timestamp: new Date().toISOString() });
+  app.get('/health', async (_req, res) => {
+    try {
+      await AppDataSource.query('SELECT 1');
+      res.json({ status: 'ok', database: 'up', timestamp: new Date().toISOString() });
+    } catch {
+      res.status(503).json({
+        error: { code: 'DATABASE_UNAVAILABLE', message: 'No hay conexion con la base de datos.' },
+      });
+    }
   });
 
   return app;
