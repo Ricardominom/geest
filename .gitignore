@@ -1,0 +1,8 @@
+node_modules/
+dist/
+.env
+*.log
+.DS_Store
+
+# El enunciado es material de GEEST: no va en un repo público.
+RETO GEEST.pdf

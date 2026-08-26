@@ -1,0 +1,31 @@
+{
+  "name": "reto-geest-api",
+  "version": "1.0.0",
+  "description": "API REST de gestion de tareas colaborativas - Reto tecnico GEEST",
+  "main": "dist/server.js",
+  "license": "MIT",
+  "engines": { "node": ">=20" },
+  "devEngines": {
+    "packageManager": {
+      "name": "pnpm",
+      "version": "^11.5.0",
+      "onFail": "download"
+    }
+  },
+  "scripts": {
+    "dev": "tsx watch src/server.ts",
+    "build": "tsc -p tsconfig.json",
+    "start": "node dist/server.js",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "dotenv": "^17.4.2",
+    "express": "4.21.2"
+  },
+  "devDependencies": {
+    "@types/express": "4.17.25",
+    "@types/node": "22.20.1",
+    "typescript": "5.9.3",
+    "tsx": "^4.23.12"
+  }
+}

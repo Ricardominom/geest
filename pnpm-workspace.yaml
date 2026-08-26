@@ -1,0 +1,15 @@
+# Configuracion de pnpm. Desde pnpm 10 los ajustes viven aqui y no en .npmrc,
+# que solo conserva autenticacion y registry.
+
+# Cooldown de dependencias: no resolver versiones publicadas hace menos de
+# 24 horas. La mayoria de paquetes comprometidos se detectan y retiran en
+# pocas horas, asi que esperar un dia evita instalarlos durante su ventana
+# de exposicion. En pnpm 11 este ya es el valor por defecto; se deja escrito
+# para que la decision quede documentada y no dependa de un default.
+minimumReleaseAge: 1440
+
+# Los scripts de instalacion de dependencias estan bloqueados por defecto.
+# esbuild se autoriza de forma explicita: lo necesita tsx y su script solo
+# descarga el binario nativo de la plataforma.
+allowBuilds:
+  esbuild: true
