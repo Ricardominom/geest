@@ -38,3 +38,15 @@ export function parseIdParam(req: Request, param: string): number {
   }
   return value;
 }
+
+export function parseQuery<T>(req: Request, schema: ZodType<T>): T {
+  const result = schema.safeParse(req.query);
+  if (!result.success) {
+    throw AppError.badRequest(
+      'VALIDATION_ERROR',
+      'Los parametros de consulta no son validos.',
+      toDetails(result.error),
+    );
+  }
+  return result.data;
+}

@@ -1,6 +1,7 @@
 import express, { Application } from 'express';
 import { AppDataSource } from './db/data-source';
 import { usersRouter } from './routes/users.routes';
+import { tasksRouter } from './routes/tasks.routes';
 import { errorHandler, notFoundHandler } from './middleware/errorHandler';
 
 export function createApp(): Application {
@@ -25,6 +26,7 @@ export function createApp(): Application {
   });
 
   app.use(usersRouter);
+  app.use(tasksRouter);
   app.use(notFoundHandler);
   app.use(errorHandler);
 
