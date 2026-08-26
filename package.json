@@ -18,7 +18,10 @@
     "dev": "tsx watch src/server.ts",
     "build": "tsc -p tsconfig.json",
     "start": "node dist/server.js",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "migration:run": "tsx ./node_modules/typeorm/cli.js migration:run -d src/db/data-source.ts",
+    "migration:revert": "tsx ./node_modules/typeorm/cli.js migration:revert -d src/db/data-source.ts",
+    "migration:show": "tsx ./node_modules/typeorm/cli.js migration:show -d src/db/data-source.ts"
   },
   "dependencies": {
     "dotenv": "^17.4.2",
