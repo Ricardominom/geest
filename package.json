@@ -27,8 +27,8 @@
     "test": "jest",
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",
-    "schema:dump": "bash scripts/generar-schema.sh"
-
+    "schema:dump": "bash scripts/generar-schema.sh",
+    "vaciar": "tsx scripts/vaciar-base.ts"
   },
   "dependencies": {
     "dotenv": "^17.4.2",

@@ -164,3 +164,14 @@ Es el mismo problema que resuelve `Idempotency-Key`, visto desde el otro lado.
 - **Rate limiting.**
 - **Despachador multi-instancia.** El código usa `SKIP LOCKED` y lo soportaría, pero
   solo está probado con una instancia.
+
+## Datos de ejemplo en producción
+
+La API desplegada tiene datos sembrados con `./scripts/sembrar-demo.sh`:
+
+- **Tarea 1** — abierta, 1 de 2 partes completadas
+- **Tarea 2** — archivada, 4 de 4, con su notificación entregada
+- **Tarea 3** — abierta, sin asignados
+
+    curl -s https://reto-geest-api-uh5j.onrender.com/tasks/2/notifications
+    curl -s https://reto-geest-api-uh5j.onrender.com/users
