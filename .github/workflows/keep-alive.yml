@@ -1,0 +1,19 @@
+name: keep-alive
+
+# Render free suspende el servicio tras 15 minutos sin trafico, y un servicio
+# dormido no puede despertarse a si mismo: al congelarse el contenedor, ningun
+# temporizador interno sigue corriendo. El ping tiene que venir de fuera.
+on:
+  schedule:
+    - cron: '*/10 * * * *'
+  workflow_dispatch:
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Despertar la API
+        run: |
+          curl -sS --max-time 90 --retry 2 --retry-delay 15 \
+            -o /dev/null -w 'HTTP %{http_code} en %{time_total}s\n' \
+            https://reto-geest-api-uh5j.onrender.com/health
