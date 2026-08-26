@@ -1,6 +1,7 @@
 import { env } from '../config/env';
 import { AppDataSource } from '../db/data-source';
 import { rows } from '../db/raw';
+import { log } from '../utils/logger';
 
 const TAMANO_LOTE = 20;
 
@@ -92,7 +93,7 @@ async function procesar(pendiente: Pendiente): Promise<void> {
           WHERE "id" = $1`,
         [pendiente.id, intento],
       );
-      console.log(`[notify] tarea ${pendiente.task_id} entregada en el intento ${intento}`);
+      log.info(`[notify] tarea ${pendiente.task_id} entregada en el intento ${intento}`);
       return;
     }
 
@@ -106,7 +107,7 @@ async function procesar(pendiente: Pendiente): Promise<void> {
           WHERE "id" = $1`,
         [pendiente.id, intento, resultado.error],
       );
-      console.error(
+      log.error(
         `[notify] tarea ${pendiente.task_id} descartada tras ${intento} intento(s): ${resultado.error}`,
       );
       return;
@@ -120,7 +121,7 @@ async function procesar(pendiente: Pendiente): Promise<void> {
         WHERE "id" = $1`,
       [pendiente.id, intento, resultado.error, String(espera)],
     );
-    console.warn(
+    log.warn(
       `[notify] tarea ${pendiente.task_id} fallo el intento ${intento}, reintento en ${espera} ms`,
     );
   });
@@ -134,7 +135,7 @@ export async function despacharPendientes(): Promise<number> {
     try {
       await procesar(pendiente);
     } catch (error) {
-      console.error(`[notify] error procesando la notificacion ${pendiente.id}:`, error);
+      log.error(`[notify] error procesando la notificacion ${pendiente.id}:`, error);
     }
   }
   return lote.length;
@@ -142,7 +143,7 @@ export async function despacharPendientes(): Promise<number> {
 
 export function iniciarDespachador(): void {
   if (!env.notifyUrl) {
-    console.warn('[notify] NOTIFY_URL sin configurar: el despachador no se inicia.');
+    log.warn('[notify] NOTIFY_URL sin configurar: el despachador no se inicia.');
     return;
   }
   setInterval(() => {
@@ -150,5 +151,5 @@ export function iniciarDespachador(): void {
       console.error('[notify] fallo el ciclo de despacho:', error),
     );
   }, env.notifyPollMs).unref();
-  console.log(`[notify] despachador activo cada ${env.notifyPollMs} ms hacia ${env.notifyUrl}`);
+  log.info(`[notify] despachador activo cada ${env.notifyPollMs} ms hacia ${env.notifyUrl}`);
 }

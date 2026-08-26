@@ -16,14 +16,19 @@
   },
   "scripts": {
     "dev": "tsx watch src/server.ts",
-    "build": "tsc -p tsconfig.json",
     "start": "node dist/server.js",
     "typecheck": "tsc --noEmit",
     "migration:run": "tsx ./node_modules/typeorm/cli.js migration:run -d src/db/data-source.ts",
     "migration:revert": "tsx ./node_modules/typeorm/cli.js migration:revert -d src/db/data-source.ts",
     "migration:show": "tsx ./node_modules/typeorm/cli.js migration:show -d src/db/data-source.ts",
     "limpiar": "tsx scripts/limpiar-datos-de-prueba.ts",
-    "receptor": "tsx scripts/receptor-falso.ts"
+    "receptor": "tsx scripts/receptor-falso.ts",
+    "build": "tsc -p tsconfig.build.json",
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "test:coverage": "jest --coverage",
+    "schema:dump": "bash scripts/generar-schema.sh"
+
   },
   "dependencies": {
     "dotenv": "^17.4.2",
@@ -35,8 +40,13 @@
   },
   "devDependencies": {
     "@types/express": "4.17.25",
+    "@types/jest": "30.0.0",
     "@types/node": "22.20.1",
     "@types/pg": "^8.23.1",
+    "@types/supertest": "7.2.1",
+    "jest": "30.4.2",
+    "supertest": "7.2.2",
+    "ts-jest": "29.4.12",
     "tsx": "^4.23.12",
     "typescript": "5.9.3"
   }

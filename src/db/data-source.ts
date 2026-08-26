@@ -28,5 +28,5 @@ export const AppDataSource = new DataSource({
     Outbox1787830000000,
   ],
   synchronize: false,
-  logging: env.nodeEnv === 'development' ? ['error', 'warn'] : ['error'],
+  logging: env.nodeEnv === 'test' ? false : env.nodeEnv === 'development' ? ['error', 'warn'] : ['error'],
 });

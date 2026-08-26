@@ -3,6 +3,7 @@ dist/
 .env
 *.log
 .DS_Store
+coverage/
 
 # El enunciado es material de GEEST: no va en un repo público.
 RETO GEEST.pdf

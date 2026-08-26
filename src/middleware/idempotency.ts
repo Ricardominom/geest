@@ -3,6 +3,7 @@ import { NextFunction, Request, Response } from 'express';
 import { AppDataSource } from '../db/data-source';
 import { rows } from '../db/raw';
 import { AppError } from '../errors/AppError';
+import { log } from '../utils/logger';
 
 const ESPERA_MAX_MS = 5_000;
 const INTERVALO_MS = 50;
@@ -64,7 +65,7 @@ function interceptarRespuesta(res: Response, key: string): void {
           );
         }
       } catch (error) {
-        console.error('[idempotency] no se pudo registrar la respuesta:', error);
+        log.error('[idempotency] no se pudo registrar la respuesta:', error);
         await AppDataSource
           .query(`DELETE FROM "idempotency_keys" WHERE "key" = $1`, [key])
           .catch(() => undefined);
@@ -168,6 +169,6 @@ export async function purgarClavesVencidas(): Promise<void> {
       [String(VIGENCIA_HORAS)],
     );
   } catch (error) {
-    console.error('[idempotency] fallo la purga de claves vencidas:', error);
+    log.error('[idempotency] fallo la purga de claves vencidas:', error);
   }
 }

@@ -13,3 +13,4 @@ minimumReleaseAge: 1440
 # descarga el binario nativo de la plataforma.
 allowBuilds:
   esbuild: true
+  unrs-resolver: set this to true or false
