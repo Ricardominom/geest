@@ -20,4 +20,8 @@ export class AppError extends Error {
   static conflict(code: string, message: string): AppError {
     return new AppError(409, code, message);
   }
+
+  static unprocessable(code: string, message: string): AppError {
+    return new AppError(422, code, message);
+  }
 }

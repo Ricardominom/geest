@@ -3,7 +3,8 @@ import { z } from 'zod';
 import { asyncHandler } from '../middleware/errorHandler';
 import { parseIdParam, parseQuery, validateBody } from '../middleware/validate';
 import { TASK_STATUSES, TaskStatus } from '../entities/Task';
-import { assignUsers, completeTaskPart, createTask, getTask, listTasks } from '../services/tasks.service';
+import { assignUsers, completeTaskPart, createTask, getTask, listTasks, listTaskNotifications } from '../services/tasks.service';
+import { idempotency } from '../middleware/idempotency';
 
 const createTaskSchema = z.object({
   title: z
@@ -38,6 +39,7 @@ export const tasksRouter = Router();
 tasksRouter.post(
   '/tasks',
   validateBody(createTaskSchema),
+  idempotency(),
   asyncHandler(async (req, res) => {
     res.status(201).json(await createTask(req.body));
   }),
@@ -46,6 +48,7 @@ tasksRouter.post(
 tasksRouter.post(
   '/tasks/:idTask/assign',
   validateBody(assignSchema),
+  idempotency(),
   asyncHandler(async (req, res) => {
     const taskId = parseIdParam(req, 'idTask');
     res.status(200).json(await assignUsers(taskId, req.body.userIds));
@@ -55,6 +58,7 @@ tasksRouter.post(
 tasksRouter.post(
   '/tasks/:idTask/complete',
   validateBody(completeSchema),
+  idempotency(),
   asyncHandler(async (req, res) => {
     const taskId = parseIdParam(req, 'idTask');
     res.status(200).json(await completeTaskPart(taskId, req.body.userId));
@@ -74,5 +78,13 @@ tasksRouter.get(
   asyncHandler(async (req, res) => {
     const taskId = parseIdParam(req, 'idTask');
     res.status(200).json(await getTask(taskId));
+  }),
+);
+
+tasksRouter.get(
+  '/tasks/:idTask/notifications',
+  asyncHandler(async (req, res) => {
+    const taskId = parseIdParam(req, 'idTask');
+    res.status(200).json(await listTaskNotifications(taskId));
   }),
 );

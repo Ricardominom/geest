@@ -237,14 +237,30 @@ export async function completeTaskPart(taskId: number, userId: number): Promise<
     )[0].n;
 
     let status: TaskStatus = task.status;
-
     if (pendientes === 0 && task.status === 'open') {
-      await manager.query(
-        `UPDATE "tasks" SET "status" = 'archived', "archived_at" = now(), "updated_at" = now()
-         WHERE "id" = $1`,
-        [taskId],
-      );
+      const archivada = rows<{ archived_at: Date }>(
+        await manager.query(
+          `UPDATE "tasks" SET "status" = 'archived', "archived_at" = now(), "updated_at" = now()
+           WHERE "id" = $1
+           RETURNING "archived_at"`,
+          [taskId],
+        ),
+      )[0];
       status = 'archived';
+
+      await manager.query(
+        `INSERT INTO "notifications" ("task_id", "event_type", "payload")
+         VALUES ($1, 'task.archived', $2::json)
+         ON CONFLICT ("task_id", "event_type") DO NOTHING`,
+        [
+          taskId,
+          JSON.stringify({
+            taskId,
+            title: task.title,
+            archivedAt: archivada.archived_at.toISOString(),
+          }),
+        ],
+      );
     }
 
     return {
@@ -256,4 +272,80 @@ export async function completeTaskPart(taskId: number, userId: number): Promise<
       pendingUsers: pendientes,
     };
   });
+}
+
+export async function listTaskNotifications(taskId: number) {
+  const existe = rows<{ id: number }>(
+    await AppDataSource.query(`SELECT "id" FROM "tasks" WHERE "id" = $1`, [taskId]),
+  );
+  if (existe.length === 0) {
+    throw AppError.notFound('TASK_NOT_FOUND', `No existe la tarea con id ${taskId}.`);
+  }
+
+  type NotifRow = {
+    id: string; event_type: string; payload: unknown; status: string;
+    attempts: number; next_attempt_at: Date; last_error: string | null;
+    created_at: Date; sent_at: Date | null;
+  };
+
+  const notificaciones = rows<NotifRow>(
+    await AppDataSource.query(
+      `SELECT "id", "event_type", "payload", "status", "attempts",
+              "next_attempt_at", "last_error", "created_at", "sent_at"
+         FROM "notifications" WHERE "task_id" = $1 ORDER BY "id" ASC`,
+      [taskId],
+    ),
+  );
+
+  if (notificaciones.length === 0) {
+    return { taskId, notifications: [] };
+  }
+
+  type AttemptRow = {
+    notification_id: string; attempt_number: number; http_status: number | null;
+    error: string | null; duration_ms: number; attempted_at: Date;
+  };
+
+  // Una sola consulta para todos los intentos y union en memoria, en lugar de
+  // una consulta por notificacion (N+1).
+  const intentos = rows<AttemptRow>(
+    await AppDataSource.query(
+      `SELECT "notification_id", "attempt_number", "http_status",
+              "error", "duration_ms", "attempted_at"
+         FROM "notification_attempts"
+        WHERE "notification_id" = ANY($1::bigint[])
+        ORDER BY "notification_id" ASC, "attempt_number" ASC`,
+      [notificaciones.map((n) => n.id)],
+    ),
+  );
+
+  const porNotificacion = new Map<string, AttemptRow[]>();
+  for (const intento of intentos) {
+    const clave = String(intento.notification_id);
+    const lista = porNotificacion.get(clave) ?? [];
+    lista.push(intento);
+    porNotificacion.set(clave, lista);
+  }
+
+  return {
+    taskId,
+    notifications: notificaciones.map((n) => ({
+      id: n.id,
+      eventType: n.event_type,
+      payload: n.payload,
+      status: n.status,
+      attempts: n.attempts,
+      nextAttemptAt: n.status === 'pending' ? n.next_attempt_at : null,
+      lastError: n.last_error,
+      createdAt: n.created_at,
+      sentAt: n.sent_at,
+      deliveryAttempts: (porNotificacion.get(String(n.id)) ?? []).map((a) => ({
+        attempt: a.attempt_number,
+        httpStatus: a.http_status,
+        error: a.error,
+        durationMs: a.duration_ms,
+        at: a.attempted_at,
+      })),
+    })),
+  };
 }

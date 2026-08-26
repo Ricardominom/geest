@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { asyncHandler } from '../middleware/errorHandler';
 import { parseIdParam, validateBody } from '../middleware/validate';
 import { createUser, listUserTasks, listUsers } from '../services/users.service';
+import { idempotency } from '../middleware/idempotency';
 
 const createUserSchema = z.object({
   name: z
@@ -28,6 +29,7 @@ export const usersRouter = Router();
 usersRouter.post(
   '/users',
   validateBody(createUserSchema),
+  idempotency(),
   asyncHandler(async (req, res) => {
     res.status(201).json(await createUser(req.body));
   }),

@@ -22,4 +22,9 @@ export const env = {
   nodeEnv: process.env.NODE_ENV ?? 'development',
   port: num('PORT', 3000),
   databaseUrl: required('DATABASE_URL'),
+  notifyUrl: process.env.NOTIFY_URL ?? '',
+  notifyTimeoutMs: num('NOTIFY_TIMEOUT_MS', 5000),
+  notifyMaxAttempts: num('NOTIFY_MAX_ATTEMPTS', 3),
+  notifyPollMs: num('NOTIFY_POLL_MS', 1000),
+  notifyBackoffMs: num('NOTIFY_BACKOFF_MS', 2000),
 };
