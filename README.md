@@ -175,3 +175,22 @@ La API desplegada tiene datos sembrados con `./scripts/sembrar-demo.sh`:
 
     curl -s https://reto-geest-api-uh5j.onrender.com/tasks/2/notifications
     curl -s https://reto-geest-api-uh5j.onrender.com/users
+
+## Dónde está desplegada y por qué
+
+**Render**, runtime Node nativo, contra **Supabase** (PostgreSQL 16 gestionado).
+Acceso: https://reto-geest-api-uh5j.onrender.com
+
+Se descartó **Vercel** por una razón de arquitectura, no de preferencia: es
+serverless, cada petición ejecuta una función que nace y muere. El despachador
+de notificaciones necesita un proceso vivo permanentemente revisando la bandeja
+de salida, y eso no existe en ese modelo.
+
+Se descartó **Docker** porque Render compila y ejecuta Node directamente: añadir
+un Dockerfile sería una capa más que mantener sin ganar nada. Y un **VPS** exigía
+administrar sistema operativo, certificados y reinicios, trabajo ajeno al reto.
+
+Render da HTTPS, despliegue automático desde GitHub y un proceso de larga vida,
+con coste cero. Su limitación —suspende el servicio tras 15 minutos sin tráfico,
+con un arranque de unos 50 segundos— se mitiga con un keep-alive en GitHub
+Actions cada 10 minutos y un monitor externo cada 5.
